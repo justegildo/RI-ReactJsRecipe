@@ -1,0 +1,8 @@
+{
+    "data": [
+        {"id": "1", "nom": " Abobo", "temps": " 2h ", "nbrePersonne": " 04", "difficulte": "FACILE", 
+            "description": " RAS", "prix": "12 FCFA", "dateCreation": " 06/10/2022", "dateUpdate": "06/10/2022 ", "ingredient": " "},
+        {"id": "2", "nom": " Abobo", "temps": " 2h ", "nbrePersonne": " 04", "difficulte": "DIFFICILE", 
+            "description": " RAS", "prix": "12 FCFA", "dateCreation": " 06/10/2022", "dateUpdate": "06/10/2022 ", "ingredient": " "}
+    ]
+}
