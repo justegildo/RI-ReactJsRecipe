@@ -58,8 +58,8 @@ export const AppTopbar = (props) => {
         <div className="layout-topbar">
             <Link to="/" className="layout-topbar-logo">
                 <img src={props.layoutColorMode === 'light' ? 
-                    'assets/layout/images/logo-dark.svg' : 
-                    'assets/layout/images/logo-white.svg'} alt="logo" />
+                    'assets/layout/images/logo2.svg' : 
+                    'assets/layout/images/logo2.svg'} alt="logo" />
                 <span>RI-Recipe</span>
             </Link>
 

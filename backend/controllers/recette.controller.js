@@ -4,11 +4,11 @@ const ObjectID = require('mongoose').Types.ObjectId;
 //env
 module.exports.recettePost = async (req, res) => {
     const { nom, temps, nombrePersonne, difficultes, description, 
-        prix, ingredientsList:[] } = req.body
+        prix, ingredient } = req.body
     //console.log(req.body);
     try {
         const recette = await RecetteModel.create({nom, temps, nombrePersonne, 
-            difficultes, description, prix, ingredientsList  });
+            difficultes, description, prix, ingredient  });
         res.status(201).json({ recette: recette._id});
     }
     catch (err){
@@ -46,7 +46,7 @@ module.exports.updateRecette = async (req, res) => {
             difficultes: req.body.difficultes, 
             description: req.body.description, 
             prix: req.body.prix, 
-            //ingredientsList: req.body.ingredientsList
+            ingredient: req.body.ingredientsList
         };
         
         RecetteModel.findByIdAndUpdate(

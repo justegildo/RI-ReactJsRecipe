@@ -5,11 +5,18 @@ import { Button } from 'primereact/button';
 import { Toolbar } from 'primereact/toolbar';
 import { InputText } from 'primereact/inputtext';
 import { Dialog } from 'primereact/dialog';
-import { Calendar } from 'primereact/calendar'
-import IngredientService from '../service/IngredientService';
+import { Calendar } from 'primereact/calendar';
+import { MultiSelect } from 'primereact/multiselect';
+import { Dropdown } from 'primereact/dropdown';
+import { InputSwitch } from 'primereact/inputswitch';
+import { Switch } from 'react-router-dom';
+import { InputTextarea } from 'primereact/inputtextarea';
+import RecetteService from '../service/RecetteService';
 import axios from "axios";
+import IngredientService from '../service/IngredientService';
 
-const Ingredient = () => {
+
+const Recette = () => {
     const [yesNo, setYesNo] = useState({});
     const [form, setForm] = useState({});
     
@@ -25,7 +32,7 @@ const Ingredient = () => {
     );
 };
 
-const Table = (props) =>{
+const Table =(props)=>{
     const [items, setItems] = useState([]);
     const [globalFilter, setGlobalFilter] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -36,13 +43,14 @@ const Table = (props) =>{
     }, []);
 
     const loadItems = () => {
-        const ingredientService = new IngredientService();
-        ingredientService.getIngredients().then(data =>{ 
-            setLoading(true);
-                setItems(data);   
-            })
+        const recetteService = new RecetteService();
+        recetteService.get().then(data =>{ 
+            setLoading(false);
+                setItems(data); 
+            });
     }    
- 
+    //console.log(items)
+
     const openNew = () => {
         setForm({
             visible: true,
@@ -78,7 +86,7 @@ const Table = (props) =>{
                 setLoading(true);
                 axios({
                     method: "delete",
-                    url: `${process.env.REACT_APP_API_URL}api/ingredient/` + item._id})
+                    url: `${process.env.REACT_APP_API_URL}api/recette/` + item._id})
                     .then((res) => {
                         setLoading(false);
                         loadItems();
@@ -91,18 +99,18 @@ const Table = (props) =>{
         })
     }
 
-
+    //console.log(items);
+    
     return (
         <div>
-            <h4>Mes ingrédients</h4>
-            <h6>Il y a  ingrédients</h6>
+            <h4>Mes recettes</h4>
             <Toolbar className="mb-4" 
                 left={
                     <React.Fragment>
                         <div className="my-2">
-                            <Button label="Créer un ingrédient" icon="pi pi-plus" className="p-button-success mr-2" 
+                            <Button label="Créer une recette" icon="pi pi-plus" className="p-button-success mr-2" 
                                 onClick={openNew} />
-                            <Button label="Actualiser" icon="pi pi-refresh" className="p-button-primry mr-2"
+                            <Button label="Actualiser" icon="pi pi-refresh" className="p-button-primry mr-2" 
                                 onClick={()=>{setLoading(true); loadItems()}} />
                         </div>
                     </React.Fragment>
@@ -117,17 +125,31 @@ const Table = (props) =>{
                 } />
             <DataTable value={items} dataKey="id" globalFilter={globalFilter} responsiveLayout="scroll"
                 paginator rows={10}>
-                <Column field="id" header="Numéro" sortable hidden></Column>
+                <Column field="id" header="Numéro" sortable style={{width: "10px"}} hidden></Column>
                 <Column field="nom" header="Libellé " sortable></Column>
-                <Column field="prix" header="Prix " sortable></Column>
-                <Column field="quantite" header="Quantité " sortable></Column>
-                <Column field="dateCreation" header="Date de création" dateFormat="mm/dd/yy" sortable></Column>
+                <Column field="temps" header="Temps " sortable hidden></Column>
+                <Column field="nombrePersonne" header="Nombre de personnes " sortable ></Column>
+                <Column field="difficultes" header="Difficulté" sortable body={(item) =>
+                <span className={`customer-badge status-${item.difficultes === 'NORMALE'
+                    ? 'new'
+                    : (item.difficultes === 'FACILE' ? 'qualified' : 'unqualified')}`}>
+                    {item.difficultes}
+                </span>
+                } />
+                <Column field="description" header="Description " sortable ></Column>
+                <Column field="prix" header="Prix " sortable ></Column>
+                <Column field="ingredientsList" header="Ingrédients" sortable ></Column>
+                <Column field="dateCreation" header="Date de création" sortable hidden></Column>
+                <Column field="dateUpdate" header="Date update" sortable hidden></Column>
                 <Column body={ (selectedItem)=>
                     <div className="flex justify-content-end">
-                        <Button icon="pi pi-pencil" className="p-button-rounded p-button-success mr-2" onClick={()=> editItem(selectedItem)} />
-                        <Button icon="pi pi-trash" className="p-button-rounded p-button-warning mr-2" onClick={()=> deleteItem(selectedItem)} />
+                        <Button icon="pi pi-pencil" className="p-button-rounded p-button-success mr-2" 
+                            onClick={()=> editItem(selectedItem)}/>
+                        <Button icon="pi pi-trash" className="p-button-rounded p-button-warning mr-2" 
+                            onClick={()=> deleteItem(selectedItem)}/>
                     </div>
                 } />
+                
             </DataTable>
         </div>
     );
@@ -138,7 +160,17 @@ const Form = (props) =>{
     const {visible, hide, data, setData, callback } = props.form;
     const {setYesNo} = props;
     const[loading, setLoading] = useState(false);
+    const [ingredients, setIngredients] = useState(null);
 
+    useEffect(()=> {
+        if(!visible) return;
+        const ingredientService = new IngredientService();
+        ingredientService.getIngredients().then(data =>{ 
+            setLoading(false);
+            setIngredients(data);   
+            })
+    }, [visible])
+    console.log(JSON.stringify(ingredients, null, 2)); 
 
     const bind = (e) => {
         if(e.target.value !== undefined) {
@@ -151,25 +183,24 @@ const Form = (props) =>{
         }else{
             alert("Binding fails.")
         }
-        //alert(JSON.stringify(data, null, 2))
     }
 
     const submit = ()=>{
         if(!data) return;
 
         setYesNo(
-            {  
+            {   
                 visible: true,
-                message : data._id ? "Confirmez-vous la modification ?" : "Confirmez-vous l'ajout ?",
+                message : data.id ? "Confirmez-vous la modification ?" : "Confirmez-vous l'ajout ?",
                 hide: ()=> setYesNo((prev)=>({...prev, visible: false})),
                 callback : ()=> {
                     setLoading(true);
                     if(data._id) {
-                        //modification d'ingredient
+                        //modification d'une recette
                         axios({
                             method: "put",
-                            url: `${process.env.REACT_APP_API_URL}api/ingredient/` + data._id,
-                                data,
+                            url: `${process.env.REACT_APP_API_URL}api/recette/` + data._id,
+                                data
                         })
                             .then((res) => {
                                 setLoading(false);
@@ -177,65 +208,85 @@ const Form = (props) =>{
                             })
                             .catch ((err) => {
                                 console.log(err);
-                            });
+                            }); 
                     
                     } else {
-                        //création d'ingrédient
+                        //création d'une recette
+                        console.log(data);
                         axios({
                             method: "post",
-                            url: `${process.env.REACT_APP_API_URL}api/ingredient/register/`,
+                            url: `${process.env.REACT_APP_API_URL}api/recette/register/`,
                             data
                         })
                             .then((res) => {
                                 setLoading(false);
-
                                 console.log("Réussi");
-                                //alert("Réussi");
                             })
                             .catch ((err) => {
                                 console.log(err);
                             });
                     };
-                },
+                }
             }
         )
     }
 
     return(
 
-        <Dialog visible={visible} style={{ width: '500px' }} header="Détails d'un ingrédient" modal className="p-fluid" 
+        <Dialog visible={visible} style={{ width: '600px' }} header="Détails d'un ingrédient" modal className="p-fluid" 
             footer={
                 <>
                     <Button label="Annuler" icon="pi pi-times" className="p-button-text" onClick={hide}  />
-                    <Button label="Valider" icon="pi pi-check" className="p-button-text" onClick={submit} 
-                        loading={loading} />
+                    <Button label="Valider" icon="pi pi-check" className="p-button-text" onClick={submit} loading={loading} />
                 </>
             } 
             onHide={hide}
             >  
                 <div className="field" hidden>
-                    <label htmlFor="id">Numéro</label>
+                    <label htmlFor="id">Identifiant</label>
                     <InputText id="id" value={data && data.id} onChange={bind} readOnly />
                 </div>
                 <div className="field">
                     <label htmlFor="nom">Libellé</label>
-                    <InputText id="nom" value={data && data.nom} onChange={bind} required /*tooltip="libellé"*/
-                        />
-                        {/* <Message severity="error" text="Username is required" /> */}
+                    <InputText id="nom" value={data && data.nom} onChange={bind} required />
                 </div>
                 <div className="field">
-                    <label htmlFor="prix">Prix </label>
+                    <label htmlFor="temps">Temps (en minutes) </label>
+                    <InputText id="temps" value={data && data.temps} onChange={bind} required />
+                </div>
+                <div className="field">
+                    <label htmlFor="nombrePersonne">Nombre de personnes </label>
+                    <InputText id="nombrePersonne" value={data && data.nombrePersonne} onChange={bind} required />
+                </div>
+                <div className="field">
+                    <label htmlFor="difficultes">Difficulté </label>
+                    <Dropdown id="difficultes" onChange={bind} placeholder="Aucune sélection" value={data?.difficultes}
+                        options={["FACILE", "NORMALE" ,"DIFFICILE"]} />
+                </div>
+                <div className="field">
+                    <label htmlFor="description">Description </label>
+                    <InputTextarea id="description" value={data && data.description} onChange={bind} required autoResize />
+                </div>
+                <div className="field">
+                    <label htmlFor="prix">Prix</label>
                     <InputText id="prix" value={data && data.prix} onChange={bind} required />
                 </div>
                 <div className="field">
-                    <label htmlFor="quantite">Quantite </label>
-                    <InputText id="quantite" value={data && data.quantite} onChange={bind} required />
-                </div>
-                <div className="field" hidden>
                     <label htmlFor="dateCreation">Date de création</label>
                     <Calendar id="dateCreation" value={data && new Date(data.dateCreation)} onChange={bind}
                         dateFormat="dd/mm/yy" mask="99/99/9999"  />
                 </div>
+                <div className="field">
+                    <label htmlFor="dateUpdate">Date de mise à jour</label>
+                    <Calendar id="dateUpdate" value={data && new Date(data.dateUpdate)} onChange={bind}
+                        dateFormat="dd/mm/yy" mask="99/99/9999"  />
+                </div>
+                <div className="field">
+                    <label htmlFor="ingredientsList">Ingrédients</label>
+                    <MultiSelect id="ingredientsList" options={ingredients} onChange={bind} 
+                        value={data?.ingredientsList} optionLabel="nom" placeholder="Aucune sélection" />
+                </div>
+                
         </Dialog>
     )
 }
@@ -265,5 +316,4 @@ const Confirmation = (props)=>{
     )
 } 
 
-export default Ingredient;
-
+export default Recette;

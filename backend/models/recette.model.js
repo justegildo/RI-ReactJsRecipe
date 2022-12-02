@@ -48,7 +48,7 @@ const recetteSchema = new mongoose.Schema(
             type: Date,
             default: Date.now,
         },
-        ingredientsList: {
+        ingredient: {
                 type: [String],
                 required: true,
                 trim: true

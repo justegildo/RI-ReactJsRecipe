@@ -138,7 +138,7 @@ const Table =(props)=>{
                 } />
                 <Column field="description" header="Description " sortable ></Column>
                 <Column field="prix" header="Prix " sortable ></Column>
-                <Column field="ingredientsList" header="Ingrédients" sortable ></Column>
+                <Column field="ingredient" header="Ingrédients" sortable ></Column>
                 <Column field="dateCreation" header="Date de création" sortable hidden></Column>
                 <Column field="dateUpdate" header="Date update" sortable hidden></Column>
                 <Column body={ (selectedItem)=>
@@ -170,7 +170,7 @@ const Form = (props) =>{
             setIngredients(data);   
             })
     }, [visible])
-    console.log(JSON.stringify(ingredients, null, 2)); 
+    //console.log(JSON.stringify(ingredients, null, 2)); 
 
     const bind = (e) => {
         if(e.target.value !== undefined) {
@@ -200,7 +200,8 @@ const Form = (props) =>{
                         axios({
                             method: "put",
                             url: `${process.env.REACT_APP_API_URL}api/recette/` + data._id,
-                                data
+                                data,
+                                coupleIngredients
                         })
                             .then((res) => {
                                 setLoading(false);
@@ -216,7 +217,8 @@ const Form = (props) =>{
                         axios({
                             method: "post",
                             url: `${process.env.REACT_APP_API_URL}api/recette/register/`,
-                            data
+                            data,
+                            coupleIngredients
                         })
                             .then((res) => {
                                 setLoading(false);
@@ -229,6 +231,25 @@ const Form = (props) =>{
                 }
             }
         )
+    }
+
+    const [selectedCoupleIngredient, setSelectedCoupleIngredient] = useState();
+    const [coupleIngredients, setCoupleIngredients] = useState([]);
+
+    const addChoice = ()=>{
+        if(!selectedCoupleIngredient) return;
+        let items = [...coupleIngredients, ...[selectedCoupleIngredient]];
+        setCoupleIngredients(items);
+        setSelectedCoupleIngredient(null);
+    }
+
+    let essai = JSON.stringify(coupleIngredients, null, 2);
+    console.log(essai);
+
+    const removeSelectedCoupleIngredient = (selectedCoupleIngredient)=> {
+        let index = coupleIngredients.indexOf(selectedCoupleIngredient);
+        coupleIngredients.splice(index, 1);
+        setCoupleIngredients([...coupleIngredients]);
     }
 
     return(
@@ -283,9 +304,27 @@ const Form = (props) =>{
                 </div>
                 <div className="field">
                     <label htmlFor="ingredientsList">Ingrédients</label>
-                    <MultiSelect id="ingredientsList" options={ingredients} onChange={bind} 
-                        value={data?.ingredientsList} optionLabel="nom" placeholder="Aucune sélection" />
+                    <Dropdown id="ingredientsList" options={ingredients} 
+                        onChange={(e)=> {setSelectedCoupleIngredient({...selectedCoupleIngredient, ingredient: e.value})}} 
+                        value={selectedCoupleIngredient?.ingredient} 
+                        optionLabel="nom" 
+                        placeholder="Aucune sélection" />
                 </div>
+                <div className="field">
+                    <Button label="Ajouter" className="my-2" onClick={addChoice} />
+                </div>
+
+                <DataTable dataKey="id" value={coupleIngredients} responsiveLayout="scroll" 
+                paginator rows={10}>
+                <Column field="ingredient.nom" header="Libellé"></Column>
+                <Column field="ingredient.quantite" header="Quantité"></Column>
+                <Column body={ (selectedItem)=>
+                    <div className="flex justify-content-end">
+                        <Button icon="pi pi-trash" className="p-button-rounded p-button-warning mr-2" 
+                            onClick={()=> removeSelectedCoupleIngredient(selectedItem)} />
+                    </div>
+                } />   
+            </DataTable>
                 
         </Dialog>
     )
